@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate Smart_Car_W2_Instrumentation.pptx using only the Python standard library."""
+import os
 import zipfile
 from xml.sax.saxutils import escape
 
@@ -63,6 +64,7 @@ class Slide:
     def __init__(self, bg=WHITE):
         self.bg = bg
         self.items = []
+        self.pics = []
         self.nid = 2
 
     def shape(self, x, y, w, h, paras=None, fill=None, line=None, lw=1.0,
@@ -84,6 +86,20 @@ class Slide:
 
     def text(self, x, y, w, h, paras, anchor="t", inset=0.05):
         self.shape(x, y, w, h, paras, anchor=anchor, inset=inset)
+
+    def picture(self, file, x, y, w, h, descr=""):
+        """Embed a PNG from ./images at the given position/size (inches)."""
+        if file not in self.pics:
+            self.pics.append(file)
+        rid = f"rId{self.pics.index(file) + 2}"
+        sid = self.nid
+        self.nid += 1
+        self.items.append(
+            f'<p:pic><p:nvPicPr><p:cNvPr id="{sid}" name="Picture {sid}" descr="{escape(descr)}"/>'
+            '<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>'
+            f'<p:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>'
+            f'<p:spPr><a:xfrm><a:off x="{e(x)}" y="{e(y)}"/><a:ext cx="{e(w)}" cy="{e(h)}"/></a:xfrm>'
+            '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>')
 
     def xml(self):
         return (f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld {NS}><p:cSld>'
@@ -124,7 +140,8 @@ s.text(0.9, 0.8, 11, 0.4, [P("STELLANTIS  ×  Capgemini", 16, CYAN, b=True)])
 s.text(0.9, 1.6, 11.5, 1.0, [P("Smart_Car_W2", 48, WHITE, b=True)])
 s.text(0.9, 2.6, 11.5, 0.8, [P("Optimisation de la connexion instrumentation", 30, WHITE)])
 s.shape(0.9, 3.55, 2.0, 0.05, fill=CYAN)
-s.text(0.9, 3.8, 11.0, 0.9, [P("Suppression du connecteur instrumentation du faisceau planche de bord "
+s.picture("car_harness.png", 9.55, 4.45, 3.5, 2.78, "Voiture avec faisceau et bretelle détachable")
+s.text(0.9, 3.8, 8.4, 1.2, [P("Suppression du connecteur instrumentation du faisceau planche de bord "
                                "et accès à la fonction via une bretelle dédiée et détachable.", 18, "C9D6E3")])
 s.shape(0.9, 5.2, 4.6, 0.6, [P("Catégorie : Amélioration / Innovation", 16, NAVY, b=True, algn="ctr")],
         fill=CYAN, geom="roundRect", anchor="ctr", adj=30000)
@@ -242,14 +259,16 @@ steps = [("1", "Prototype", "Premier prototype réalisé sans connexions GND ni 
          ("3", "Validation", "Prototype validé par le responsable des essais véhicules.")]
 for k, (n, t, d) in enumerate(steps):
     x = 0.5 + k * 4.18
-    s.shape(x, 1.75, 3.9, 3.0, [
+    s.shape(x, 1.75, 3.9, 1.95, [
         P(t, 20, NAVY, b=True, algn="ctr"),
-        P(d, 15, GREY, algn="ctr", before=10)], fill=LIGHT, geom="roundRect", anchor="ctr", inset=0.25, adj=8000)
+        P(d, 14, GREY, algn="ctr", before=6)], fill=LIGHT, geom="roundRect", anchor="ctr", inset=0.25, adj=8000)
     s.shape(x + 1.55, 1.45, 0.8, 0.8, [P(n, 22, WHITE, b=True, algn="ctr")],
             fill=CYAN, geom="ellipse", anchor="ctr", inset=0)
     if k < 2:
-        s.shape(x + 3.92, 3.05, 0.24, 0.4, fill=BLUE, geom="rightArrow")
-s.shape(0.5, 5.05, SW - 1.0, 0.95, [
+        s.shape(x + 3.92, 2.55, 0.24, 0.4, fill=BLUE, geom="rightArrow")
+s.picture("pigtail_diagram.png", 0.5, 3.85, SW - 1.0, (SW - 1.0) * 200 / 2340,
+          "Schéma : faisceau planche de bord, bretelle détachable, instrumentation")
+s.shape(0.5, 5.2, SW - 1.0, 0.85, [
     P([("Retour de l'équipe essais : ", {"b": True, "color": GREEN}),
        ("elle souhaite voir la même approche appliquée à d'autres projets, "
         "ce qui ouvre un potentiel de réutilisation et de standardisation.", {})], 16)],
@@ -347,6 +366,7 @@ s.shape(0, 0, 0.25, SH, fill=CYAN)
 s.text(0.9, 2.4, 11.5, 1.2, [P("Merci", 54, WHITE, b=True)])
 s.text(0.9, 3.6, 11.5, 0.8, [P("Questions ?", 30, CYAN)])
 s.text(0.9, 5.6, 11.5, 0.5, [P("Smart_Car_W2  |  Optimisation de la connexion instrumentation", 14, "C9D6E3")])
+s.picture("car_harness.png", 8.2, 1.9, 4.4, 3.49, "Voiture avec faisceau et bretelle détachable")
 slides.append(s)
 
 # ================================================================ package parts
@@ -359,6 +379,7 @@ content_types = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
                  '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
                  '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
                  '<Default Extension="xml" ContentType="application/xml"/>'
+                 '<Default Extension="png" ContentType="image/png"/>'
                  f'<Override PartName="/ppt/presentation.xml" ContentType="{CT}.presentation.main+xml"/>'
                  f'<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="{CT}.slideMaster+xml"/>'
                  f'<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="{CT}.slideLayout+xml"/>'
@@ -473,10 +494,16 @@ parts = {
 }
 for i, sl in enumerate(slides, 1):
     parts[f"ppt/slides/slide{i}.xml"] = sl.xml()
-    parts[f"ppt/slides/_rels/slide{i}.xml.rels"] = slide_rels
+    img_rels = "".join(f'<Relationship Id="rId{k + 2}" Type="{REL}/image" Target="../media/{f}"/>'
+                       for k, f in enumerate(sl.pics))
+    parts[f"ppt/slides/_rels/slide{i}.xml.rels"] = slide_rels.replace("</Relationships>", img_rels + "</Relationships>")
+
+used_images = sorted({f for sl in slides for f in sl.pics})
 
 with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED) as z:
     z.writestr("[Content_Types].xml", parts.pop("[Content_Types].xml"))
     for name, data in parts.items():
         z.writestr(name, data)
+    for f in used_images:
+        z.write(os.path.join("images", f), f"ppt/media/{f}")
 print(f"Wrote {OUT} with {N} slides")

@@ -20,3 +20,11 @@ python3 build_presentation.py
 ```
 
 The script uses only the Python standard library.
+
+## Illustrations
+
+Two generated illustrations (`images/`) are used on slides 1, 6 and 10. To redraw them:
+
+```sh
+python3 make_images.py   # then re-run build_presentation.py
+```
